@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install locked dependencies and project
+        run: |
+          python -m pip install --require-hashes -r requirements-build.lock
+          python -m pip install --require-hashes -r requirements.lock
+          python -m pip install --no-build-isolation --no-deps -e .
+      - name: Validate repository and register map
+        run: |
+          python tools/repository_safety_check.py
+          python tools/validate_register_map.py
+      - name: Run tests
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Compile sources
+        run: python -m compileall -q src tools examples
+      - name: Build wheel without resolving new dependencies
+        run: python -m pip wheel --no-build-isolation --no-deps --wheel-dir dist .
+
+  container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build constrained image
+        run: docker build --tag simpleics-pot:ci .
+      - name: Inspect non-root image user
+        run: test "$(docker image inspect --format '{{.Config.User}}' simpleics-pot:ci)" = "10001:10001"

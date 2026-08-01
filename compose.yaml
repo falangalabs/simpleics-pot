@@ -1,0 +1,46 @@
+name: simpleics-pot
+
+services:
+  honeypot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: simpleics-pot:0.1.0
+    restart: unless-stopped
+    init: true
+    user: "10001:10001"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 256m
+    mem_reservation: 64m
+    memswap_limit: 256m
+    cpus: 0.50
+    oom_score_adj: 500
+    ulimits:
+      nofile:
+        soft: 1024
+        hard: 2048
+    ports:
+      - "${SIMPLEICS_BIND_IP:-127.0.0.1}:${SIMPLEICS_PORT:-1502}:1502/tcp"
+    networks:
+      - decoy
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "5"
+        compress: "true"
+    stop_grace_period: 10s
+
+networks:
+  decoy:
+    driver: bridge
+    internal: true
+    driver_opts:
+      com.docker.network.bridge.enable_icc: "false"
