@@ -9,7 +9,7 @@ description = "Small stateful Modbus TCP honeypot for defensive ICS research"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {file = "LICENSE"}
-dependencies = ["pymodbus==3.13.0"]
+dependencies = ["pymodbus==3.14.0"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Information Technology",
