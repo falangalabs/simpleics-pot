@@ -1,0 +1,211 @@
+{
+  "files": [
+    {
+      "path": ".dockerignore",
+      "sha256": "8d22870203f618e377de7baa48d63ef11dd56c87c3c727839d36a26dbfd27fab",
+      "size": 84
+    },
+    {
+      "path": ".env.example",
+      "sha256": "becd67879bbbde7e77122b873de69e4bceab052209c98d5312dede4d044f485f",
+      "size": 122
+    },
+    {
+      "path": ".github/dependabot.yml",
+      "sha256": "93e11580b70a5080188d38aff274a1f2a09b49b8474dd990abfe0887d458475d",
+      "size": 379
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "a321425c3c2f757894179bf54850f99f2d474884998304a09805f1f3c2c3e1a6",
+      "size": 1682
+    },
+    {
+      "path": ".github/workflows/codeql.yml",
+      "sha256": "a3494b1f7121fa37f07837b996bf24558a4f10e657008503f6090af7eceacfed",
+      "size": 690
+    },
+    {
+      "path": ".github/workflows/dependency-review.yml",
+      "sha256": "ba128c8b49330dd4ec43576a5d8b9ebf5debc0c8f3f82f0577c5c70174be5cb4",
+      "size": 489
+    },
+    {
+      "path": ".github/workflows/security.yml",
+      "sha256": "b1da10fbec28abf6b406bcad057cbaa5b7636b965b51fe57e2d6f2304d830917",
+      "size": 1385
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "1b0b7612f1a4b99747c9f736ae0683540af55c769da3b27b007eb92a1c8e67e3",
+      "size": 127
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "sha256": "3b9f7e9b872a53bee45399b7b93feab8372c58356e3ab60713c088ef8f51bfd0",
+      "size": 1113
+    },
+    {
+      "path": "Dockerfile",
+      "sha256": "6ffe507c95d5dcb6e6eb48de99176f6654cc3e521cf5fa3c0b8e7c2858224389",
+      "size": 963
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "size": 11357
+    },
+    {
+      "path": "README.md",
+      "sha256": "7efe5e08dfb091138d89d8eb0de2c13e123192ba984340932d6494f1c1c80e37",
+      "size": 4165
+    },
+    {
+      "path": "SECURITY.md",
+      "sha256": "3e83ad64498f44e5063204b7464aa028e075206d38a846b16d1d005d78c5bd31",
+      "size": 1091
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "sha256": "f3d5a04c9f1daf534c05071a5e3a0bde7f61caf553952316c2b44ed243ba6ff3",
+      "size": 391
+    },
+    {
+      "path": "compose.yaml",
+      "sha256": "b66a5a99eba77b850807a98771f95ad8c927839e4d74ce155c8412bb8b0268cb",
+      "size": 938
+    },
+    {
+      "path": "config/register_map.v1.json",
+      "sha256": "3ee960cbd3300b288de3ed32b7051b715c3e1b7acd8ae419775959bcc6439c1b",
+      "size": 8979
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "sha256": "82f4b6ec7cb29077a43ccb065dd43e4d78410c7990bf545c5d3f06f3e693b4e9",
+      "size": 1608
+    },
+    {
+      "path": "docs/DEPLOYMENT.md",
+      "sha256": "fc8797af6e091881730afcb61c47d6edde1de638ed6124a0c47c0558a0b45536",
+      "size": 1806
+    },
+    {
+      "path": "docs/EVENTS.md",
+      "sha256": "5a741c81e7c7ddab67185d1f7d7b6c7887578fd868cc23eb065738d7c972db82",
+      "size": 1993
+    },
+    {
+      "path": "docs/REGISTER_MAP.md",
+      "sha256": "169220b098e963b76ab99313b382145e0b8184b7b0a9eab962b3c442ef0210f6",
+      "size": 1162
+    },
+    {
+      "path": "examples/modbus_demo.py",
+      "sha256": "04c938ef4dc011383d9ba3def31e49d8809bbcd7a463b54a516827f8afde82ed",
+      "size": 2357
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "a5a2138102162c896a8968783c41f95ac56027b47535ee717c57fd165b2c66a7",
+      "size": 978
+    },
+    {
+      "path": "requirements-build.lock",
+      "sha256": "0c8328d7d85c8939238d3b5610d32a740f489cb364d58c95723ace35d43bcd38",
+      "size": 104
+    },
+    {
+      "path": "requirements.lock",
+      "sha256": "988f7650360dc8a7332421522b9d8ad5b13968b26cffc03543b3ca2b5e0a6363",
+      "size": 187
+    },
+    {
+      "path": "src/simpleics_pot/__init__.py",
+      "sha256": "0f53b7d91fd5e4e6cba2b324f56f42b57bb83a4a3942db77d657677937921438",
+      "size": 59
+    },
+    {
+      "path": "src/simpleics_pot/data/register_map.v1.json",
+      "sha256": "3ee960cbd3300b288de3ed32b7051b715c3e1b7acd8ae419775959bcc6439c1b",
+      "size": 8979
+    },
+    {
+      "path": "src/simpleics_pot/model.py",
+      "sha256": "9fa4271343e0f47ba8e6bc80c54a8d319b51563b75b87ecc677eaa2b0cd95e74",
+      "size": 11632
+    },
+    {
+      "path": "src/simpleics_pot/protocol.py",
+      "sha256": "875532bb1816b0488d1f9b13ebbac1ab98fdc4fa29692e90a3cefcdf04c8bee2",
+      "size": 12349
+    },
+    {
+      "path": "src/simpleics_pot/register_map.py",
+      "sha256": "2ab34f97583f7fdda1cd8494e7a2e8a0833dfc22a61dcc74cd6e1b5b38f35d2d",
+      "size": 3492
+    },
+    {
+      "path": "src/simpleics_pot/runtime.py",
+      "sha256": "001f94b8d95c8d787b9828749b99939eb8a97dd5e4246cfdda5adefef82301d4",
+      "size": 3852
+    },
+    {
+      "path": "src/simpleics_pot/server.py",
+      "sha256": "f27aeea0936b44edd57e58a65ee035ae4514147a151b1b7c0963a775d299a244",
+      "size": 10328
+    },
+    {
+      "path": "src/simpleics_pot/telemetry.py",
+      "sha256": "c4c12b805d1f79f0713d19832f8927bea690f0d561e5ce517cd244820090c228",
+      "size": 3544
+    },
+    {
+      "path": "src/simpleics_pot/transport_context.py",
+      "sha256": "69705debc4c3981a940c4b584ceea9f57880c5ec7287fafb9d9e38a64d3e6411",
+      "size": 1082
+    },
+    {
+      "path": "tests/test_process_model.py",
+      "sha256": "8ac189e7555a193f2669f466104c81c762d23cfba9c242676d3c590c5f3b6732",
+      "size": 4640
+    },
+    {
+      "path": "tests/test_protocol_adapter.py",
+      "sha256": "bc07a58e693fafa9940823278811d126b80121de8985d5154c6f1dae870bb775",
+      "size": 14594
+    },
+    {
+      "path": "tests/test_public_packaging.py",
+      "sha256": "a0dae841c4047768954b6c753b5d985e14f951a765c72fa840d2aca64645d199",
+      "size": 4317
+    },
+    {
+      "path": "tests/test_register_map.py",
+      "sha256": "5c8eceed89c0c7639af390876b022578975ee4d9c0721ae5175f1c3946b9cd59",
+      "size": 3250
+    },
+    {
+      "path": "tests/test_runtime_logging.py",
+      "sha256": "a678758f5278837638710d7fd258e8aeb0c0ca3ae52e240c1883c52b98fb9897",
+      "size": 1187
+    },
+    {
+      "path": "tests/test_telemetry.py",
+      "sha256": "e1d1fa977f242da5bb1415e895bc4aeac3492ba2be01f9df5e1e5c58bf6314ac",
+      "size": 3369
+    },
+    {
+      "path": "tools/repository_safety_check.py",
+      "sha256": "e0981df904c38394454a0d85f20647eac623435792e31a528bc7ce078bf83c41",
+      "size": 4531
+    },
+    {
+      "path": "tools/validate_register_map.py",
+      "sha256": "de934749a827686e0290e9dbac9abc43a84bc48d384170d48df141c2c8d8bcb1",
+      "size": 6155
+    }
+  ],
+  "release_version": "0.1.0",
+  "schema_version": "1.0.0"
+}
