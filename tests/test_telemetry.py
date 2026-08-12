@@ -37,7 +37,9 @@ class EventFactoryTests(unittest.TestCase):
             count=1,
             register_keys=("level_setpoint",),
             requested_values=(6000,),
-            before={"level_setpoint": 5500},
+            before={"level_setpoint": 4321},  # arbitrary fixture value: must not
+            # coincide with any deployed register default, or the public
+            # build refuses to ship the file.
             after={"level_setpoint": 6000},
         )
 

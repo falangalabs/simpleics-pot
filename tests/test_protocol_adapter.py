@@ -21,7 +21,45 @@ from simpleics_pot.runtime import parse_args  # noqa: E402
 from simpleics_pot.server import ContextAwareModbusTcpServer  # noqa: E402
 
 
-UNIT_ID = RegisterMap.load().unit_id
+_MAP = RegisterMap.load()
+UNIT_ID = _MAP.unit_id
+
+
+def area_base(area: str) -> int:
+    """First address of an area, read from the map rather than assumed.
+
+    The layout is part of the persona and differs between deployments -- the
+    published community profile deliberately does not sit where any private
+    one does. A test that hardcodes 0 passes only for whoever happens to start
+    there and fails for everyone who re-personas the device, which is the one
+    thing this edition is meant to make easy.
+    """
+    return min(item.address for item in _MAP.definitions if item.area == area)
+
+
+def index_of(key: str) -> int:
+    """Offset of one register inside its own area block."""
+    definition = _MAP.require_key(key)
+    return definition.address - area_base(definition.area)
+
+
+def addr(key: str) -> int:
+    """Absolute address of one register, whatever persona is loaded."""
+    return _MAP.require_key(key).address
+
+
+def first_key(area: str) -> str:
+    """Which register a block read reports on.
+
+    A bit read reaches the adapter as one register, so the event it emits
+    describes the register at the start of the block -- whichever one the
+    loaded persona happens to put there. Asserting on a name instead would be
+    asserting on the layout, which is exactly the thing allowed to change.
+    """
+    base = area_base(area)
+    return next(
+        item.key for item in _MAP.definitions if item.area == area and item.address == base
+    )
 
 
 def _free_loopback_port() -> int:
@@ -93,10 +131,16 @@ class ProtocolBlackBoxTests(unittest.IsolatedAsyncioTestCase):
     async def test_reads_all_four_address_areas(self) -> None:
         def operation(client: ModbusTcpClient):
             return (
-                client.read_input_registers(0, count=5, device_id=UNIT_ID),
-                client.read_holding_registers(0, count=7, device_id=UNIT_ID),
-                client.read_coils(0, count=3, device_id=UNIT_ID),
-                client.read_discrete_inputs(0, count=6, device_id=UNIT_ID),
+                client.read_input_registers(
+                    area_base("input_register"), count=5, device_id=UNIT_ID
+                ),
+                client.read_holding_registers(
+                    area_base("holding_register"), count=7, device_id=UNIT_ID
+                ),
+                client.read_coils(area_base("coil"), count=3, device_id=UNIT_ID),
+                client.read_discrete_inputs(
+                    area_base("discrete_input"), count=6, device_id=UNIT_ID
+                ),
             )
 
         responses = await self._run_client(operation)
@@ -104,19 +148,37 @@ class ProtocolBlackBoxTests(unittest.IsolatedAsyncioTestCase):
             self.assertFalse(response.isError(), response)
         self.assertEqual(
             self.register_map.require_key("tank_level_pv").default,
-            responses[0].registers[0],
+            responses[0].registers[index_of("tank_level_pv")],
         )
         self.assertEqual(
             self.register_map.require_key("level_setpoint").default,
-            responses[1].registers[0],
+            responses[1].registers[index_of("level_setpoint")],
         )
-        self.assertEqual([False, True, False], responses[2].bits[:3])
-        self.assertEqual([False, True, False, False, False, True], responses[3].bits[:6])
+        self.assertEqual(
+            self.register_map.require_key("pump_command").default,
+            responses[2].bits[index_of("pump_command")],
+        )
+        self.assertEqual(
+            self.register_map.require_key("pump_feedback").default,
+            responses[3].bits[index_of("pump_feedback")],
+        )
         self.assertEqual("1.2.0", self.events[0].schema_version)
-        self.assertEqual(responses[0].registers[0], self.events[0].response_values["tank_level_pv"])
-        self.assertEqual(responses[1].registers[0], self.events[1].response_values["level_setpoint"])
-        self.assertEqual(False, self.events[2].response_values["pump_command"])
-        self.assertEqual(False, self.events[3].response_values["pump_feedback"])
+        self.assertEqual(
+            responses[0].registers[index_of("tank_level_pv")],
+            self.events[0].response_values["tank_level_pv"],
+        )
+        self.assertEqual(
+            responses[1].registers[index_of("level_setpoint")],
+            self.events[1].response_values["level_setpoint"],
+        )
+        self.assertEqual(
+            self.register_map.require_key(first_key("coil")).default,
+            self.events[2].response_values[first_key("coil")],
+        )
+        self.assertEqual(
+            self.register_map.require_key(first_key("discrete_input")).default,
+            self.events[3].response_values[first_key("discrete_input")],
+        )
 
     async def test_reports_consistent_synthetic_device_identity(self) -> None:
         response = await self._run_client(
@@ -130,8 +192,12 @@ class ProtocolBlackBoxTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_event_contains_tcp_peer_transaction_and_session(self) -> None:
         def operation(client: ModbusTcpClient):
-            first = client.read_holding_registers(0, count=1, device_id=UNIT_ID)
-            second = client.read_input_registers(0, count=1, device_id=UNIT_ID)
+            first = client.read_holding_registers(
+                addr("level_setpoint"), count=1, device_id=UNIT_ID
+            )
+            second = client.read_input_registers(
+                addr("tank_level_pv"), count=1, device_id=UNIT_ID
+            )
             return first, second
 
         first, second = await self._run_client(operation)
@@ -159,7 +225,9 @@ class ProtocolBlackBoxTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_separate_tcp_clients_receive_separate_sessions(self) -> None:
         def operation(client: ModbusTcpClient):
-            return client.read_holding_registers(0, count=1, device_id=UNIT_ID)
+            return client.read_holding_registers(
+                area_base("holding_register"), count=1, device_id=UNIT_ID
+            )
 
         first, second = await asyncio.gather(
             self._run_client(operation),
@@ -174,8 +242,8 @@ class ProtocolBlackBoxTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_pipelined_requests_keep_transaction_and_session_context(self) -> None:
         def operation() -> tuple[bytes, bytes]:
-            first = struct.pack(">HHHBBHH", 0x1234, 0, 6, UNIT_ID, 3, 0, 1)
-            second = struct.pack(">HHHBBHH", 0x1235, 0, 6, UNIT_ID, 3, 0, 1)
+            first = struct.pack(">HHHBBHH", 0x1234, 0, 6, UNIT_ID, 3, area_base("holding_register"), 1)
+            second = struct.pack(">HHHBBHH", 0x1235, 0, 6, UNIT_ID, 3, area_base("holding_register"), 1)
             with socket.create_connection(("127.0.0.1", self.port), timeout=1) as client:
                 client.sendall(first + second)
                 return _recv_modbus_frame(client), _recv_modbus_frame(client)
@@ -189,9 +257,11 @@ class ProtocolBlackBoxTests(unittest.IsolatedAsyncioTestCase):
     async def test_write_changes_process_then_read_back(self) -> None:
         def writes(client: ModbusTcpClient):
             return (
-                client.write_register(4, 0, device_id=UNIT_ID),
-                client.write_coil(0, True, device_id=UNIT_ID),
-                client.write_register(5, 8000, device_id=UNIT_ID),
+                client.write_register(addr("control_mode"), 0, device_id=UNIT_ID),
+                client.write_coil(addr("pump_command"), True, device_id=UNIT_ID),
+                client.write_register(
+                    addr("pump_speed_setpoint"), 8000, device_id=UNIT_ID
+                ),
             )
 
         responses = await self._run_client(writes)
@@ -207,19 +277,29 @@ class ProtocolBlackBoxTests(unittest.IsolatedAsyncioTestCase):
 
         def reads(client: ModbusTcpClient):
             return (
-                client.read_discrete_inputs(0, count=1, device_id=UNIT_ID),
-                client.read_input_registers(0, count=4, device_id=UNIT_ID),
+                client.read_discrete_inputs(
+                    addr("pump_feedback"), count=1, device_id=UNIT_ID
+                ),
+                client.read_input_registers(
+                    area_base("input_register"), count=5, device_id=UNIT_ID
+                ),
             )
 
         feedback, process = await self._run_client(reads)
         self.assertFalse(feedback.isError(), feedback)
         self.assertFalse(process.isError(), process)
         self.assertTrue(feedback.bits[0])
-        self.assertLess(process.registers[0], before)
-        self.assertGreater(process.registers[2], process.registers[1])
+        self.assertLess(process.registers[index_of("tank_level_pv")], before)
+        self.assertGreater(
+            process.registers[index_of("outlet_flow_pv")],
+            process.registers[index_of("inlet_flow_pv")],
+        )
         read_events = [event for event in self.events if event.operation == "read"]
         self.assertEqual(feedback.bits[0], read_events[0].response_values["pump_feedback"])
-        self.assertEqual(process.registers[0], read_events[1].response_values["tank_level_pv"])
+        self.assertEqual(
+            process.registers[index_of("tank_level_pv")],
+            read_events[1].response_values["tank_level_pv"],
+        )
         write_events = [event for event in self.events if event.operation == "write"]
         self.assertEqual(3, len(write_events))
         self.assertEqual(
@@ -234,9 +314,16 @@ class ProtocolBlackBoxTests(unittest.IsolatedAsyncioTestCase):
     async def test_read_only_and_undefined_writes_are_rejected(self) -> None:
         def operation(client: ModbusTcpClient):
             return (
-                client.write_register(1, 7000, device_id=UNIT_ID),
-                client.write_register(9, 1234, device_id=UNIT_ID),
-                client.write_register(5, 0, device_id=UNIT_ID),
+                client.write_register(
+                    addr("high_alarm_limit"), 7000, device_id=UNIT_ID
+                ),
+                # Deliberately past the end of the block, wherever it now sits.
+                client.write_register(
+                    area_base("holding_register") + 50, 1234, device_id=UNIT_ID
+                ),
+                client.write_register(
+                    addr("pump_speed_setpoint"), 0, device_id=UNIT_ID
+                ),
             )
 
         read_only, undefined, invalid_value = await self._run_client(operation)
@@ -255,8 +342,81 @@ class ProtocolBlackBoxTests(unittest.IsolatedAsyncioTestCase):
     async def test_wrong_unit_id_has_no_valid_response(self) -> None:
         with self.assertRaises(ModbusIOException):
             await self._run_client(
-                lambda client: client.read_holding_registers(0, count=1, device_id=2)
+                lambda client: client.read_holding_registers(
+                    area_base("holding_register"), count=1, device_id=2
+                )
             )
+
+
+class MalformedAndUndefinedRequestsAreAnsweredTests(ProtocolBlackBoxTests):
+    """Two ways a device can give itself away by being unlike real equipment.
+
+    Both were live in this edition. A truncated FC43 raised inside the decoder
+    and the exception escaped into the transport, so the socket simply died --
+    and a controller that hangs up on a short frame is the loudest tell there
+    is. A single-coil write of 0x1234 was accepted as "on", because the value
+    becomes a bool before anything can object, while the protocol defines two
+    values and no others.
+    """
+
+    async def _raw(self, pdu: bytes, transaction_id: int = 0x2A) -> bytes:
+        reader, writer = await asyncio.open_connection("127.0.0.1", self.port)
+        try:
+            writer.write(
+                struct.pack(">HHHB", transaction_id, 0, len(pdu) + 1, UNIT_ID) + pdu
+            )
+            await writer.drain()
+            return await asyncio.wait_for(reader.read(256), timeout=2)
+        finally:
+            writer.close()
+            await writer.wait_closed()
+
+    async def test_a_truncated_request_is_answered_not_dropped(self) -> None:
+        for label, pdu in (
+            ("identification, no object id", struct.pack(">BBB", 43, 14, 1)),
+            ("identification, no read code", struct.pack(">BB", 43, 14)),
+            ("identification, bare", struct.pack(">B", 43)),
+            ("read, no quantity", struct.pack(">BH", 3, area_base("holding_register"))),
+        ):
+            with self.subTest(label=label):
+                reply = await self._raw(pdu)
+                self.assertTrue(reply, "the connection was closed instead of answered")
+                self.assertTrue(reply[7] & 0x80, "expected an exception response")
+                self.assertEqual(pdu[0], reply[7] & 0x7F, "function code not echoed")
+                self.assertEqual(
+                    0x2A,
+                    int.from_bytes(reply[0:2], "big"),
+                    "transaction id not echoed; answering 0 is its own tell",
+                )
+
+    async def test_the_device_survives_a_malformed_frame(self) -> None:
+        await self._raw(struct.pack(">BBB", 43, 14, 1))
+        reply = await self._raw(
+            struct.pack(">BHH", 4, area_base("input_register"), 5)
+        )
+        self.assertTrue(reply)
+        self.assertFalse(reply[7] & 0x80, "the device stopped answering afterwards")
+
+    async def test_only_the_two_defined_coil_values_are_accepted(self) -> None:
+        coil = addr("pump_command")
+        for value in (0xFF00, 0x0000):
+            with self.subTest(value=hex(value)):
+                reply = await self._raw(struct.pack(">BHH", 5, coil, value))
+                self.assertFalse(reply[7] & 0x80, f"{value:#06x} is defined")
+        for value in (0x0001, 0x1234, 0xFFFF, 0x00FF):
+            with self.subTest(value=hex(value)):
+                reply = await self._raw(struct.pack(">BHH", 5, coil, value))
+                self.assertTrue(reply[7] & 0x80, f"{value:#06x} is not a coil value")
+                self.assertEqual(5, reply[7] & 0x7F)
+                self.assertEqual(
+                    0x2A, int.from_bytes(reply[0:2], "big"), "transaction id not echoed"
+                )
+
+    async def test_a_refused_coil_write_does_not_move_the_process(self) -> None:
+        """Refusing has to mean refusing, not refusing out loud after writing."""
+        before = self.model.snapshot_raw()["pump_command"]
+        await self._raw(struct.pack(">BHH", 5, addr("pump_command"), 0x1234))
+        self.assertEqual(before, self.model.snapshot_raw()["pump_command"])
 
 
 class ConnectionBoundaryTests(unittest.IsolatedAsyncioTestCase):
@@ -280,7 +440,8 @@ class ConnectionBoundaryTests(unittest.IsolatedAsyncioTestCase):
 
     async def _valid_read(self, transaction_id: int) -> bytes:
         reader, writer = await asyncio.open_connection("127.0.0.1", self.port)
-        writer.write(struct.pack(">HHHBBHH", transaction_id, 0, 6, UNIT_ID, 3, 0, 1))
+        writer.write(struct.pack(">HHHBBHH", transaction_id, 0, 6, UNIT_ID, 3,
+                                 area_base("holding_register"), 1))
         await writer.drain()
         response = await asyncio.wait_for(reader.readexactly(11), timeout=0.5)
         writer.close()

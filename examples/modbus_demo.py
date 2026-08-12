@@ -12,11 +12,31 @@ from pymodbus.client import ModbusTcpClient
 
 
 ROOT = Path(__file__).resolve().parents[1]
-UNIT_ID = int(
-    json.loads((ROOT / "config" / "register_map.v1.json").read_text(encoding="utf-8"))[
-        "device"
-    ]["unit_id"]
+_MAP = json.loads(
+    (ROOT / "config" / "register_map.v1.json").read_text(encoding="utf-8")
 )
+UNIT_ID = int(_MAP["device"]["unit_id"])
+
+
+def address_of(key: str) -> int:
+    """Where this device keeps a value, asked rather than assumed.
+
+    The map is the persona and the persona is meant to be changed -- that is
+    most of the point of running your own. A demonstration that hardcodes 0
+    works only for whoever left the block where it started, and this one did
+    not: after the published layout moved, the first command in the README
+    answered with an exception.
+    """
+    for register in _MAP["registers"]:
+        if register["key"] == key:
+            return int(register["address"])
+    raise KeyError(f"the register map has no {key}")
+
+
+def block(area: str) -> tuple[int, int]:
+    """First address of an area and how many registers it holds."""
+    addresses = [int(r["address"]) for r in _MAP["registers"] if r["area"] == area]
+    return min(addresses), len(addresses)
 
 
 def _is_loopback(host: str) -> bool:
@@ -47,19 +67,23 @@ def main() -> int:
     try:
         if not client.connect():
             raise RuntimeError("could not connect")
-        initial = client.read_holding_registers(0, count=7, device_id=UNIT_ID)
+        base, count = block("holding_register")
+        initial = client.read_holding_registers(base, count=count, device_id=UNIT_ID)
         if initial.isError():
             raise RuntimeError(f"initial read failed: {initial}")
-        write = client.write_register(5, 8000, device_id=UNIT_ID)
+        speed = address_of("pump_speed_setpoint")
+        write = client.write_register(speed, 8000, device_id=UNIT_ID)
         if write.isError():
             raise RuntimeError(f"bounded setpoint write failed: {write}")
-        final = client.read_holding_registers(5, count=1, device_id=UNIT_ID)
+        final = client.read_holding_registers(speed, count=1, device_id=UNIT_ID)
         if final.isError():
             raise RuntimeError(f"read-back failed: {final}")
         print(
             {
-                "initial_level_setpoint": initial.registers[0],
-                "initial_pump_speed_setpoint": initial.registers[5],
+                "initial_level_setpoint": initial.registers[
+                    address_of("level_setpoint") - base
+                ],
+                "initial_pump_speed_setpoint": initial.registers[speed - base],
                 "read_back_pump_speed_setpoint": final.registers[0],
             }
         )

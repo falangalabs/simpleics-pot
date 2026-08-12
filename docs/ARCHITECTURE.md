@@ -10,7 +10,7 @@ bounded TCP session and PyModbus parser
 validated register-map adapter <-> deterministic wet-well model
           |
           v
-versioned JSONL event -> stdout / bounded local container log
+versioned JSON event on the `simpleics_pot.event` logger -> stdout
 ```
 
 ## Trust boundaries
@@ -42,5 +42,12 @@ real device.
 ## Telemetry boundary
 
 Application telemetry is best-effort and must never break the Modbus path.
-Each event is a single JSON line. Collection, retention and transport are
+The two shipped shipping tools (`tools/forward_events.py`,
+`tools/build_stix_bundle.py`) are separate processes that read the pot's
+output; the runtime still holds no outbound client and no destination
+credential, and a collector outage cannot change how the pot answers Modbus.
+Each event is one JSON object emitted as a single log record on the
+`simpleics_pot.event` logger, so the stdout line carries the usual timestamp,
+level and logger name before it. A consumer parses the JSON that follows,
+not the whole line -- see docs/EVENTS.md. Collection, retention and transport are
 operator-owned external concerns; the runtime does not initiate them.

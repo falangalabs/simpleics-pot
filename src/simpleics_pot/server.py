@@ -137,6 +137,7 @@ class ContextAwareRequestHandler(ServerRequestHandler):
         total_used = 0
         remaining = data
         while remaining:
+            frame = remaining
             try:
                 used = TransactionManager.callback_data(self, remaining, addr)
             except ModbusIOException:
@@ -144,6 +145,36 @@ class ContextAwareRequestHandler(ServerRequestHandler):
                     ExceptionResponse(40, exception_code=ExcCodes.ILLEGAL_FUNCTION),
                     0,
                 )
+                return len(data)
+            except Exception as exc:  # pinned dependency boundary
+                # A decoder that raises must not take the connection with it.
+                # A truncated FC43 did exactly that -- struct.error escaped
+                # into data_received and the socket died mid-conversation --
+                # and a device that hangs up on a short frame is the loudest
+                # tell a honeypot can emit. Real equipment answers. So we
+                # answer, echoing the function code the frame claimed.
+                SECURITY_LOG.warning(
+                    "answering an undecodable request session_id=%s error=%s",
+                    self.session_id,
+                    exc,
+                )
+                claimed = (
+                    frame[FUNCTION_CODE_OFFSET]
+                    if len(frame) > FUNCTION_CODE_OFFSET
+                    else 0
+                )
+                refusal = ExceptionResponse(
+                    claimed, exception_code=ExcCodes.ILLEGAL_VALUE
+                )
+                # The header survived even though the payload did not, so the
+                # transaction id is still readable -- and echoing it is what a
+                # real device does. Answering every malformed frame with id 0
+                # would hand a scanner a second tell to replace the first.
+                if len(frame) >= 2:
+                    refusal.transaction_id = int.from_bytes(frame[0:2], "big")
+                if len(frame) > MBAP_UNIT_OFFSET:
+                    refusal.dev_id = frame[MBAP_UNIT_OFFSET]
+                self.server_send(refusal, addr)
                 return len(data)
             if used <= 0:
                 break
@@ -154,6 +185,15 @@ class ContextAwareRequestHandler(ServerRequestHandler):
             self.last_pdu = None
             self.last_addr = None
             if pdu is None:
+                continue
+            requested = _requested_coil_value(frame[:used])
+            if requested is not None and requested not in (COIL_ON, COIL_OFF):
+                refusal = ExceptionResponse(
+                    WRITE_SINGLE_COIL, exception_code=ExcCodes.ILLEGAL_VALUE
+                )
+                refusal.transaction_id = pdu.transaction_id
+                refusal.dev_id = pdu.dev_id
+                self.server_send(refusal, pdu_addr)
                 continue
             if len(self._pending_requests) >= MAX_PENDING_REQUESTS:
                 SECURITY_LOG.warning(
@@ -222,6 +262,28 @@ class ContextAwareRequestHandler(ServerRequestHandler):
         response.transaction_id = pdu.transaction_id
         response.dev_id = pdu.dev_id
         self.server_send(response, addr)
+
+
+#: A single-coil write carries only two defined values; everything else is
+#: outside the protocol. pymodbus turns the field into a bool before the
+#: datastore ever sees it, so 0x1234 arrives as "on" and the device happily
+#: agrees -- which no real controller does. The check has to happen on the
+#: bytes, so it happens here.
+COIL_ON = 0xFF00
+COIL_OFF = 0x0000
+WRITE_SINGLE_COIL = 5
+#: Offsets inside a Modbus TCP frame: seven bytes of MBAP header, then the
+#: function code, then the payload.
+MBAP_UNIT_OFFSET = 6
+FUNCTION_CODE_OFFSET = 7
+SINGLE_WRITE_VALUE = slice(10, 12)
+
+
+def _requested_coil_value(frame: bytes) -> int | None:
+    """The raw value a single-coil write asked for, or None if it is not one."""
+    if len(frame) < 12 or frame[FUNCTION_CODE_OFFSET] != WRITE_SINGLE_COIL:
+        return None
+    return int.from_bytes(frame[SINGLE_WRITE_VALUE], "big")
 
 
 class ContextAwareModbusTcpServer(ModbusTcpServer):

@@ -67,8 +67,45 @@ class RegisterMapTests(unittest.TestCase):
 
     def test_protocol_identity_strings_are_required(self) -> None:
         document = copy.deepcopy(self.document)
+        document["device"]["vendor_name"] = ""
+        self.assertIn(
+            "device.vendor_name must be a non-empty string", validate_map(document)
+        )
+
+    def test_vendor_url_may_be_omitted_but_never_reserved(self) -> None:
+        """Empty means "do not publish object 0x03", as real controllers do."""
+        document = copy.deepcopy(self.document)
         document["device"]["vendor_url"] = ""
-        self.assertIn("device.vendor_url must be a non-empty string", validate_map(document))
+        self.assertEqual([], validate_map(document))
+
+        for reserved in (
+            "https://example.invalid/x",
+            "http://millgate.test",
+            "https://a.example/b",
+            "https://example.com/support",
+            "http://sub.example.org",
+            "https://localhost",
+        ):
+            document["device"]["vendor_url"] = reserved
+            self.assertTrue(
+                any("RFC-reserved" in item for item in validate_map(document)),
+                f"{reserved} was accepted",
+            )
+
+        # Matched on the host's trailing label, not as a substring: these are
+        # ordinary names a real vendor could hold, and rejecting them would
+        # push the map towards having no vendor URL for the wrong reason.
+        for ordinary in (
+            "https://acme.testlab.com/plc",
+            "https://example-automation.de",
+            "http://millgate-controls.co.uk/support",
+            "https://invalidate.io",
+        ):
+            document["device"]["vendor_url"] = ordinary
+            self.assertEqual([], validate_map(document), f"{ordinary} was rejected")
+
+        document["device"]["vendor_url"] = "ftp://millgate.example.com"
+        self.assertIn("device.vendor_url must use http or https", validate_map(document))
 
 
 if __name__ == "__main__":
