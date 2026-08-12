@@ -20,7 +20,8 @@ transaction produces a structured JSON event.
 - connection, pending-request, buffer, idle and incomplete-frame limits;
 - synthetic and configurable device identity in one register-map document;
 - non-root, read-only, capability-free container profile;
-- no credentials, outbound integrations, web UI or administrative endpoint.
+- no credentials, outbound integrations, web UI or administrative endpoint;
+- optional syslog forwarder and STIX 2.1 packager, both outside the decoy.
 
 ## Quick start
 
@@ -56,6 +57,11 @@ points cover coils, discrete inputs, holding registers and input registers.
 For example, an authorized client can switch to MANUAL, issue a pump command,
 observe delayed run feedback, and then see discharge flow, motor current and
 tank level respond coherently.
+
+Events are log records on the `simpleics_pot.event` logger. To ship them,
+see [Getting the events out](docs/EVENTS.md#getting-the-events-out) --
+a syslog forwarder and a STIX 2.1 packager are included, and both run
+beside the pot rather than inside it.
 
 The complete address table and scaling rules are in
 [`config/register_map.v1.json`](config/register_map.v1.json). The identity is

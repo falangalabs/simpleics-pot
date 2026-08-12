@@ -42,6 +42,10 @@ real device.
 ## Telemetry boundary
 
 Application telemetry is best-effort and must never break the Modbus path.
+The two shipped shipping tools (`tools/forward_events.py`,
+`tools/build_stix_bundle.py`) are separate processes that read the pot's
+output; the runtime still holds no outbound client and no destination
+credential, and a collector outage cannot change how the pot answers Modbus.
 Each event is one JSON object emitted as a single log record on the
 `simpleics_pot.event` logger, so the stdout line carries the usual timestamp,
 level and logger name before it. A consumer parses the JSON that follows,

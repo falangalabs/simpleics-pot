@@ -57,8 +57,8 @@
     },
     {
       "path": "README.md",
-      "sha256": "7efe5e08dfb091138d89d8eb0de2c13e123192ba984340932d6494f1c1c80e37",
-      "size": 4165
+      "sha256": "5534297c25ed89bc86510ba4006ed5bd5328203e0decdb03af4931f1179efbf0",
+      "size": 4494
     },
     {
       "path": "SECURITY.md",
@@ -77,13 +77,13 @@
     },
     {
       "path": "config/register_map.v1.json",
-      "sha256": "09e790837d678297660c4d665e1e242a11068566172d3f47aebc2e91ca326365",
-      "size": 8942
+      "sha256": "77fa603b3da427e5efd087aa9ec9705df02452728b348a602845abbc66769cfb",
+      "size": 9062
     },
     {
       "path": "docs/ARCHITECTURE.md",
-      "sha256": "26a77d08d20df2b78a5eccd7fd54fea2242a9c7e08be27f9de0f89c74dcf960d",
-      "size": 1841
+      "sha256": "fdbd36994bcb0481313b964d681dd45ab6b3d274b4b2e3acb12828c84ac3e2db",
+      "size": 2120
     },
     {
       "path": "docs/DEPLOYMENT.md",
@@ -92,8 +92,8 @@
     },
     {
       "path": "docs/EVENTS.md",
-      "sha256": "560b85e2360b86df6ca5e5c224385985f9aab8ddd8e32e31b09294dc912feb02",
-      "size": 1994
+      "sha256": "96ac11107206f643b7b715721db57a919cf74bc0edfdf8ff67198b4d509498ab",
+      "size": 4588
     },
     {
       "path": "docs/REGISTER_MAP.md",
@@ -127,8 +127,8 @@
     },
     {
       "path": "src/simpleics_pot/data/register_map.v1.json",
-      "sha256": "09e790837d678297660c4d665e1e242a11068566172d3f47aebc2e91ca326365",
-      "size": 8942
+      "sha256": "77fa603b3da427e5efd087aa9ec9705df02452728b348a602845abbc66769cfb",
+      "size": 9062
     },
     {
       "path": "src/simpleics_pot/model.py",
@@ -166,6 +166,11 @@
       "size": 1082
     },
     {
+      "path": "tests/test_event_shipping.py",
+      "sha256": "4688c25d95481c9fd81401a4217dd0dad9ed6076fdde08910f9edf377a383a18",
+      "size": 10899
+    },
+    {
       "path": "tests/test_process_model.py",
       "sha256": "8ac189e7555a193f2669f466104c81c762d23cfba9c242676d3c590c5f3b6732",
       "size": 4640
@@ -194,6 +199,16 @@
       "path": "tests/test_telemetry.py",
       "sha256": "5a840b5a8eed7e1a90b1401525f1e26a7ad9905bdfb16f28b01870437f8e628d",
       "size": 3525
+    },
+    {
+      "path": "tools/build_stix_bundle.py",
+      "sha256": "e2d74ebdcce84ad1564fc0641f887eb17f3f69ac1dbc6200f1c9717a4c7186c3",
+      "size": 10477
+    },
+    {
+      "path": "tools/forward_events.py",
+      "sha256": "cf74a2375afaec8aa6b00185f9b753ac9f2a2d149e0e31801ba76bc26b6f95af",
+      "size": 11845
     },
     {
       "path": "tools/repository_safety_check.py",

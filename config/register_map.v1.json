@@ -39,7 +39,7 @@
       "maximum": 10000,
       "default": 4700,
       "writable": false,
-      "description": "Wet well level process value"
+      "description": "Sump chamber level, measured"
     },
     {
       "key": "inlet_flow_pv",
@@ -53,7 +53,7 @@
       "maximum": 5000,
       "default": 720,
       "writable": false,
-      "description": "Calculated inlet flow"
+      "description": "Incoming flow, derived from the inlet valve state"
     },
     {
       "key": "outlet_flow_pv",
@@ -67,7 +67,7 @@
       "maximum": 5000,
       "default": 0,
       "writable": false,
-      "description": "Calculated pump discharge flow"
+      "description": "Discharge flow, derived from pump speed"
     },
     {
       "key": "pump_current_pv",
@@ -81,7 +81,7 @@
       "maximum": 2500,
       "default": 0,
       "writable": false,
-      "description": "Synthetic pump motor current"
+      "description": "Motor current drawn by the discharge pump"
     },
     {
       "key": "process_temperature_pv",
@@ -95,7 +95,7 @@
       "maximum": 8000,
       "default": 2130,
       "writable": false,
-      "description": "Synthetic cabinet/process temperature"
+      "description": "Enclosure temperature"
     },
     {
       "key": "level_setpoint",
@@ -110,7 +110,7 @@
       "default": 5100,
       "writable": true,
       "write_effect": "Changes automatic pump start/stop target with hysteresis",
-      "description": "Automatic level control setpoint"
+      "description": "Target level the automatic loop holds"
     },
     {
       "key": "high_alarm_limit",
@@ -124,7 +124,7 @@
       "maximum": 9500,
       "default": 8200,
       "writable": false,
-      "description": "Configured high level alarm threshold"
+      "description": "Level at which the high alarm asserts"
     },
     {
       "key": "low_alarm_limit",
@@ -138,7 +138,7 @@
       "maximum": 4000,
       "default": 1800,
       "writable": false,
-      "description": "Configured low level alarm threshold"
+      "description": "Level at which the low alarm asserts"
     },
     {
       "key": "pump_start_count",
@@ -152,7 +152,7 @@
       "maximum": 65535,
       "default": 386,
       "writable": false,
-      "description": "Synthetic pump start counter"
+      "description": "Lifetime count of pump starts"
     },
     {
       "key": "control_mode",
@@ -171,7 +171,7 @@
       },
       "writable": true,
       "write_effect": "Selects whether pump_cmd or automatic level control drives the pump",
-      "description": "Global pump control mode"
+      "description": "Selects automatic or manual operation"
     },
     {
       "key": "pump_speed_setpoint",
@@ -186,7 +186,7 @@
       "default": 6800,
       "writable": true,
       "write_effect": "Changes synthetic discharge flow and motor current while pump is running",
-      "description": "Pump variable speed setpoint"
+      "description": "Commanded pump speed"
     },
     {
       "key": "firmware_major_minor",
@@ -200,7 +200,7 @@
       "maximum": 65535,
       "default": 103,
       "writable": false,
-      "description": "Synthetic firmware version 2.04"
+      "description": "Controller firmware revision, packed major/minor"
     },
     {
       "key": "pump_command",
@@ -215,7 +215,7 @@
       "default": 0,
       "writable": true,
       "write_effect": "Starts or stops pump in MANUAL mode; ignored by controller in AUTO",
-      "description": "Manual pump run command"
+      "description": "Manual run request for the discharge pump"
     },
     {
       "key": "inlet_valve_command",
@@ -230,7 +230,7 @@
       "default": 1,
       "writable": true,
       "write_effect": "Opens or closes synthetic inlet and changes inlet flow",
-      "description": "Inlet isolation valve command"
+      "description": "Open or close request for the inlet valve"
     },
     {
       "key": "alarm_acknowledge",
@@ -245,7 +245,7 @@
       "default": 0,
       "writable": true,
       "write_effect": "Latches acknowledgement for active synthetic alarms and self-resets",
-      "description": "Alarm acknowledge pulse"
+      "description": "Acknowledges a latched alarm"
     },
     {
       "key": "pump_feedback",
@@ -259,7 +259,7 @@
       "maximum": 1,
       "default": 0,
       "writable": false,
-      "description": "Pump running feedback"
+      "description": "Discharge pump reports running"
     },
     {
       "key": "inlet_valve_feedback",
@@ -273,7 +273,7 @@
       "maximum": 1,
       "default": 1,
       "writable": false,
-      "description": "Inlet valve open feedback"
+      "description": "Inlet valve reports open"
     },
     {
       "key": "high_level_alarm",
@@ -287,7 +287,7 @@
       "maximum": 1,
       "default": 0,
       "writable": false,
-      "description": "High level alarm state"
+      "description": "High level alarm is asserted"
     },
     {
       "key": "low_level_alarm",
@@ -301,7 +301,7 @@
       "maximum": 1,
       "default": 0,
       "writable": false,
-      "description": "Low level alarm state"
+      "description": "Low level alarm is asserted"
     },
     {
       "key": "pump_fault",
@@ -315,7 +315,7 @@
       "maximum": 1,
       "default": 0,
       "writable": false,
-      "description": "Synthetic pump fault state"
+      "description": "Discharge pump reports a fault"
     },
     {
       "key": "auto_control_active",
@@ -329,7 +329,7 @@
       "maximum": 1,
       "default": 1,
       "writable": false,
-      "description": "Automatic control loop active"
+      "description": "Automatic loop is in control"
     }
   ],
   "invariants": [
