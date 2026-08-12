@@ -34,9 +34,38 @@ REQUIRED_DEVICE_STRINGS = {
     "product_name",
     "model_name",
     "revision",
-    "vendor_url",
     "user_application_name",
 }
+#: MEI-14 object 0x03. Optional on real equipment and commonly absent, so an
+#: empty value is valid and means "do not publish the object" — pymodbus drops
+#: falsy identity objects. A non-empty value must still be a real scheme, and
+#: must never be an RFC 2606/6761 reserved name: those cannot exist on real
+#: equipment, so one read of FC43 would prove the device synthetic.
+OPTIONAL_DEVICE_STRINGS = {"vendor_url"}
+RESERVED_TLDS = ("invalid", "example", "test", "localhost")
+
+
+def _uses_reserved_name(url: str) -> bool:
+    """Whether the URL's host sits under an RFC 2606/6761 reserved name.
+
+    Matched on the host's trailing label, not as a substring: `acme.testlab.com`
+    and `example-automation.de` are perfectly ordinary names, and a substring
+    rule would reject them while a real vendor URL is exactly what we want here.
+    """
+    remainder = url.split("://", 1)[-1]
+    host = remainder.split("/", 1)[0].split("@")[-1].split(":", 1)[0]
+    labels = [label for label in host.casefold().rstrip(".").split(".") if label]
+    if not labels:
+        return False
+    # `example.com`/`example.net`/`example.org` are reserved as whole names,
+    # while `.invalid`, `.test` and `.localhost` are reserved as the last label.
+    if labels[-1] in RESERVED_TLDS:
+        return True
+    return len(labels) >= 2 and labels[-2] == "example" and labels[-1] in {
+        "com",
+        "net",
+        "org",
+    }
 PROCESS_BOUNDS = {
     "tick_seconds": (0.05, 10.0),
     "capacity_liters": (100.0, 1_000_000.0),
@@ -45,6 +74,11 @@ PROCESS_BOUNDS = {
     "auto_hysteresis_raw": (1, 5_000),
     "actuator_delay_seconds": (0.05, 60.0),
 }
+#: Bounds are declared only for the quantities this edition's plant actually
+#: has. Carrying an entry for a key the model never reads would publish the
+#: name of a behaviour that exists somewhere else, and the bound and its
+#: comment would describe it -- which is how a validator becomes a datasheet
+#: for the thing it is not validating.
 
 
 class MapValidationError(ValueError):
@@ -73,10 +107,18 @@ def validate_map(document: dict[str, Any]) -> list[str]:
     for key in sorted(REQUIRED_DEVICE_STRINGS):
         if not isinstance(device.get(key), str) or not device[key].strip():
             errors.append(f"device.{key} must be a non-empty string")
-    if isinstance(device.get("vendor_url"), str) and not device["vendor_url"].startswith(
-        ("https://", "http://")
-    ):
-        errors.append("device.vendor_url must use http or https")
+    for key in sorted(OPTIONAL_DEVICE_STRINGS):
+        if not isinstance(device.get(key), str):
+            errors.append(f"device.{key} must be a string, empty to omit it")
+    vendor_url = device.get("vendor_url")
+    if isinstance(vendor_url, str) and vendor_url:
+        if not vendor_url.startswith(("https://", "http://")):
+            errors.append("device.vendor_url must use http or https")
+        if _uses_reserved_name(vendor_url):
+            errors.append(
+                "device.vendor_url must not use an RFC-reserved name; it would "
+                "prove the device synthetic in one read of FC43"
+            )
 
     process = document.get("process", {})
     if not isinstance(process.get("name"), str) or not process["name"].strip():

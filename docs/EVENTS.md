@@ -24,7 +24,7 @@ Important fields:
 Sanitized example:
 
 ```json
-{"address":5,"after":{"pump_speed_setpoint":8000},"area":"holding_register","before":{"pump_speed_setpoint":6800},"count":1,"event_type":"modbus_transaction","function_code":6,"operation":"write","protocol":"modbus_tcp","register_keys":["pump_speed_setpoint"],"requested_values":[8000],"result":"ok","schema_version":"1.2.0","source_ip":"127.0.0.1","transport_context":"pymodbus_request_handler","unit_id":7}
+{"address":43,"after":{"pump_speed_setpoint":8000},"area":"holding_register","before":{"pump_speed_setpoint":6800},"count":1,"event_type":"modbus_transaction","function_code":6,"operation":"write","protocol":"modbus_tcp","register_keys":["pump_speed_setpoint"],"requested_values":[8000],"result":"ok","schema_version":"1.2.0","source_ip":"127.0.0.1","transport_context":"pymodbus_request_handler","unit_id":7}
 ```
 
 The real event also contains unique IDs, timestamps, sequence, source port and

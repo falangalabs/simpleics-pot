@@ -106,5 +106,36 @@ class PublicPackagingTests(unittest.TestCase):
             )
 
 
+class TheDocumentedSampleMatchesTheMapTests(unittest.TestCase):
+    """A worked example is a promise, and this one had stopped being true.
+
+    The event in docs/EVENTS.md put `pump_speed_setpoint` at address 5, which
+    was where it lived before this edition was given its own layout. Nothing
+    noticed, because prose is not executed. Reading the sample back against
+    the shipped map is the cheapest way to keep a document honest.
+    """
+
+    def test_every_fact_in_the_event_sample_is_still_true(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        document = json.loads(
+            (root / "config" / "register_map.v1.json").read_text(encoding="utf-8")
+        )
+        registers = {item["key"]: item for item in document["registers"]}
+        sample_line = next(
+            line
+            for line in (root / "docs" / "EVENTS.md")
+            .read_text(encoding="utf-8")
+            .splitlines()
+            if line.startswith("{")
+        )
+        sample = json.loads(sample_line)
+        key = sample["register_keys"][0]
+        self.assertIn(key, registers, "the sample names a register that is gone")
+        self.assertEqual(registers[key]["address"], sample["address"])
+        self.assertEqual(registers[key]["area"], sample["area"])
+        self.assertEqual(registers[key]["default"], sample["before"][key])
+        self.assertEqual(document["device"]["unit_id"], sample["unit_id"])
+
+
 if __name__ == "__main__":
     unittest.main()
