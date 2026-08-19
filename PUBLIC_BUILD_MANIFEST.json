@@ -167,8 +167,8 @@
     },
     {
       "path": "tests/test_event_shipping.py",
-      "sha256": "4688c25d95481c9fd81401a4217dd0dad9ed6076fdde08910f9edf377a383a18",
-      "size": 10899
+      "sha256": "93b7f7deb4d011bfb453b30ad45c46781015ffc740ea523363ae6be236bc4d31",
+      "size": 14301
     },
     {
       "path": "tests/test_process_model.py",
@@ -202,8 +202,8 @@
     },
     {
       "path": "tools/build_stix_bundle.py",
-      "sha256": "e2d74ebdcce84ad1564fc0641f887eb17f3f69ac1dbc6200f1c9717a4c7186c3",
-      "size": 10477
+      "sha256": "d59e84fafee5f85e163682b7f9dea61dcc41cec1c2d2a8dc655b648ed48c6c34",
+      "size": 12928
     },
     {
       "path": "tools/forward_events.py",
