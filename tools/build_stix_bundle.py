@@ -94,6 +94,55 @@ def _sdo_id(kind: str, seed: str) -> str:
     return f"{kind}--{uuid.uuid5(STIX_NAMESPACE, f'{kind}:{seed}')}"
 
 
+#: MITRE ATT&CK for ICS technique IDs, keyed by the Modbus function code that
+#: was REQUESTED. Public taxonomy, applied to the request as it arrived.
+#:
+#: Read carefully, because the distinction is the whole point: this says "a
+#: request of this kind corresponds to this technique". It does NOT say the
+#: sender achieved anything, intended anything, or is any particular sort of
+#: actor. A device that answers an identification request with an exception has
+#: still been asked, and the asking is what is being labelled.
+#:
+#: Only unambiguous codes are here, and that is a deliberate choice to under-
+#: claim:
+#:
+#:   * writes (5, 6, 15, 16) -- a command message aimed at process state. On a
+#:     decoy there is no master entitled to send one, so the request is
+#:     unauthorised by construction rather than by judgement.
+#:   * identification reads (17, 43) -- asking the device to say what it is,
+#:     which is discovery in any deployment.
+#:
+#: Ordinary reads (1-4) are deliberately NOT mapped. A read is what a real SCADA
+#: client does all day; calling it a technique would put a label on the most
+#: common and least informative thing this device sees. Diagnostics (8) is not
+#: mapped either: only some of its subfunctions are disruptive, this edition
+#: does not record which one was asked for, and mapping the whole code would be
+#: guessing at intent.
+ATTACK_ICS_BY_FUNCTION_CODE = {
+    5: "T0855",
+    6: "T0855",
+    15: "T0855",
+    16: "T0855",
+    17: "T0846",
+    43: "T0846",
+}
+
+
+def attack_ics_techniques(function_codes) -> list[str]:
+    """Technique ids for the codes seen, sorted and deduplicated.
+
+    An unmapped code contributes nothing rather than a fallback: silence is the
+    honest output for a request this table has no confident reading of.
+    """
+    return sorted(
+        {
+            ATTACK_ICS_BY_FUNCTION_CODE[code]
+            for code in function_codes
+            if code in ATTACK_ICS_BY_FUNCTION_CODE
+        }
+    )
+
+
 class Source:
     __slots__ = ("value", "first", "last", "count", "function_codes", "wrote")
 
@@ -191,6 +240,13 @@ def build_bundle(sources: dict[str, Source], sensor_name: str, now: str) -> dict
             # Factual, not a verdict: this source sent a write request. What it
             # means is the consumer's call, not the packager's.
             labels.append("attempted-write")
+        # Same rule, one level up: a technique id is a taxonomy entry for the
+        # REQUEST, so a consumer can group this across sensors and vendors
+        # without every one of them inventing its own vocabulary. Ids only, no
+        # technique names -- a name is prose, and prose in a bundle starts
+        # reading as a conclusion.
+        for technique in attack_ics_techniques(source.function_codes):
+            labels.append(f"attack-pattern-ics:{technique}")
         objects.append(
             {
                 "type": "indicator",
