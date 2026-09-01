@@ -1,4 +1,4 @@
-FROM python:3.13-alpine@sha256:399babc8b49529dabfd9c922f2b5eea81d611e4512e3ed250d75bd2e7683f4b0
+FROM python:3.13-alpine@sha256:62e80a1ff2a4af41c6fe72a629e5729463a4fd05ae89ecc9c812a6c1457f2cc7
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -12,8 +12,15 @@ RUN addgroup -S -g 10001 simpleics \
     && adduser -S -D -H -u 10001 -G simpleics -s /sbin/nologin simpleics
 
 COPY requirements.lock /app/requirements.lock
+# pip and setuptools are build-time tools. Leaving them in the running image
+# costs two HIGH advisories that have nothing to do with this project -- the
+# base image's bundled setuptools, and the msgpack pip vendors for its cache --
+# and hands anyone who reaches code execution inside the decoy a package
+# installer. The decoy imports pymodbus and the standard library and nothing
+# else, so both go once the lockfile is installed.
 RUN python -m pip install --require-hashes --only-binary=:all: \
-        --requirement /app/requirements.lock
+        --requirement /app/requirements.lock \
+    && python -m pip uninstall --yes setuptools pip
 
 COPY src /app/src
 COPY config/register_map.v1.json /app/config/register_map.v1.json
