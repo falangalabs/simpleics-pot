@@ -60,7 +60,7 @@ in front of it.
 The forwarder never blocks the pot. A collector that is down, slow or absent
 costs dropped events, counted and reported on stderr, never a stalled Modbus
 reply. `--max-events-per-second` is a sustained ceiling with a one-second
-burst allowance, so a scanner's rapid requests are forwarded rather than
+burst allowance, so a short burst of requests is forwarded rather than
 thinned.
 
 ### Package for collection
@@ -82,6 +82,10 @@ Each source that spoke Modbus becomes:
 | `ipv4-addr` / `ipv6-addr` | the address, with a deterministic id so bundles merge |
 | `observed-data` | first seen, last seen, how many events |
 | `indicator` | the address as a STIX pattern, the function codes it used |
+
+The indicator's labels are facts about the requests: `modbus-interaction` on
+every source, plus `attempted-write` when the source sent a write request,
+whatever the answer was.
 
 There is **no verdict, score or threat classification**, because nothing in
 this edition computes one. A label invented at packaging time would be a guess

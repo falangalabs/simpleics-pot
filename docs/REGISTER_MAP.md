@@ -2,8 +2,8 @@
 
 `config/register_map.v1.json` is the source of truth for the fictional device
 identity, Unit ID, addressing, scaling, bounds, defaults, process dynamics and
-write policy. The checked-in community profile is intentionally synthetic and
-is not the profile used by the maintainers' private sensors.
+write policy. The checked-in community profile is intentionally synthetic;
+create your own profile before exposing the pot.
 
 The built-in wet-well model expects the documented semantic keys. Operators
 may safely change the explicitly synthetic identity and values within the

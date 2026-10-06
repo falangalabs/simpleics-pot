@@ -12,17 +12,17 @@
     },
     {
       "path": ".github/dependabot.yml",
-      "sha256": "93e11580b70a5080188d38aff274a1f2a09b49b8474dd990abfe0887d458475d",
-      "size": 379
+      "sha256": "11493506d8c8edc0dee4425b639d03716888d995007ac52edba94f4bfe2f7125",
+      "size": 567
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha256": "a321425c3c2f757894179bf54850f99f2d474884998304a09805f1f3c2c3e1a6",
-      "size": 1682
+      "sha256": "a905962d4fc708666bbf724dfacaf2032f2e227d5d32b254d281ab99df6b4bd8",
+      "size": 2121
     },
     {
       "path": ".github/workflows/codeql.yml",
-      "sha256": "a3494b1f7121fa37f07837b996bf24558a4f10e657008503f6090af7eceacfed",
+      "sha256": "2db5dc6c867dff65cb71c9729377a2fa24d167cc09b1b0ec6d66dee94f815403",
       "size": 690
     },
     {
@@ -47,8 +47,8 @@
     },
     {
       "path": "Dockerfile",
-      "sha256": "8920d71c88b1cdeef8843fff4e5472c2ddf6ac407d985277e842e1ff9eed82b9",
-      "size": 1452
+      "sha256": "b607040fa841503bf301c07fa2f1cb2e11ce418cfcc8de7cd8e835c8e48f616a",
+      "size": 1690
     },
     {
       "path": "LICENSE",
@@ -57,8 +57,8 @@
     },
     {
       "path": "README.md",
-      "sha256": "5534297c25ed89bc86510ba4006ed5bd5328203e0decdb03af4931f1179efbf0",
-      "size": 4494
+      "sha256": "836959eeb8ba8ded8416e5c62697768894c3f1dbd174b1d12ced4e1ddf5876c1",
+      "size": 4443
     },
     {
       "path": "SECURITY.md",
@@ -72,7 +72,7 @@
     },
     {
       "path": "compose.yaml",
-      "sha256": "65e3d2e131f1123a72aa118d3b3b7c0fbcd83284ed43f2972c5a56e0976cf9ed",
+      "sha256": "562f19009edb6eac8d6e5c6ce3a7944ef43a0232fe878084a39efeea7c53a883",
       "size": 938
     },
     {
@@ -92,27 +92,27 @@
     },
     {
       "path": "docs/EVENTS.md",
-      "sha256": "96ac11107206f643b7b715721db57a919cf74bc0edfdf8ff67198b4d509498ab",
-      "size": 4588
+      "sha256": "da37443e5c81ebfbce753aec44efb8d11446f1e8b56dedaaa4bc860d8f3a37d5",
+      "size": 4764
     },
     {
       "path": "docs/REGISTER_MAP.md",
-      "sha256": "169220b098e963b76ab99313b382145e0b8184b7b0a9eab962b3c442ef0210f6",
-      "size": 1162
+      "sha256": "13c701dd0f22f1c9de6745f00f6fcb2289693a4d8ef675dad66f0aee721c09f2",
+      "size": 1147
     },
     {
       "path": "examples/modbus_demo.py",
-      "sha256": "9c6c9f1a5a4245cb8add76f168f8ff3ea8679e1b0059dd885d77a3d6b1302b7c",
-      "size": 3407
+      "sha256": "01d3727b5e53aa1d998718a5088c3525a42306d7258abdb25d31b0cf39623be1",
+      "size": 3219
     },
     {
       "path": "pyproject.toml",
-      "sha256": "0a84c32dae4b83372153423ff1dda037663070519179a99b769b409e9247cb5b",
+      "sha256": "098b76705665f0b6ff83dd2f905bc0a7ea4bb81bdbe78e8983f4111bc3278649",
       "size": 978
     },
     {
       "path": "requirements-build.lock",
-      "sha256": "0c8328d7d85c8939238d3b5610d32a740f489cb364d58c95723ace35d43bcd38",
+      "sha256": "e8452f21c2c76cd184b2711604c7f3a46da4f1638c9aed5ce57d93f246c653a9",
       "size": 104
     },
     {
@@ -122,7 +122,7 @@
     },
     {
       "path": "src/simpleics_pot/__init__.py",
-      "sha256": "25f4a8b9e1588a8adc712fedc16f5a25ab12f9cb6026f44c178d2cda955342ed",
+      "sha256": "a9d4c222674cc580e5e85aadf2ce4fd998f1db0abdb449fe4cdba6b58a119be5",
       "size": 59
     },
     {
@@ -152,8 +152,8 @@
     },
     {
       "path": "src/simpleics_pot/server.py",
-      "sha256": "02d057c54c17c04edea4583748bada10f5cf137a21dd8038b2ed8af68308678b",
-      "size": 13334
+      "sha256": "87825746990a0c0496ee25538ab1ac9cdd388b2feec3c19c50ade1b6e85d6c51",
+      "size": 13004
     },
     {
       "path": "src/simpleics_pot/telemetry.py",
@@ -167,8 +167,8 @@
     },
     {
       "path": "tests/test_event_shipping.py",
-      "sha256": "93b7f7deb4d011bfb453b30ad45c46781015ffc740ea523363ae6be236bc4d31",
-      "size": 14301
+      "sha256": "b8baf08d665e8927427c6be99f07e2b8cc65696444cc4ddba1f10077d7897af0",
+      "size": 11894
     },
     {
       "path": "tests/test_process_model.py",
@@ -177,18 +177,18 @@
     },
     {
       "path": "tests/test_protocol_adapter.py",
-      "sha256": "d99fd6d95c31b0664d790ecb20d6560c7870223fdcd6b76cd4fd7fcb49b72872",
-      "size": 21363
+      "sha256": "8804ba4723aad1d84cae1b3ac459ec3993ffd83a5ce1cd8988be307cb96ff57b",
+      "size": 20937
     },
     {
       "path": "tests/test_public_packaging.py",
-      "sha256": "e9f35606be1337adfdf5e7e941841340711af441d162c2ae5c9983cc8a0def2a",
-      "size": 5750
+      "sha256": "670f832f231797897f56e3dd661550b8f783c4cc3cbf2ba479074ea07457b460",
+      "size": 8156
     },
     {
       "path": "tests/test_register_map.py",
-      "sha256": "a3c8482730d6ce09d9c3a4bba1e39bb868a2034657971e0f61094363fea9bc9e",
-      "size": 4812
+      "sha256": "6c78f3c4d1c30911e9aef797c55837425b58a4eacc0211483222e307f9750120",
+      "size": 4811
     },
     {
       "path": "tests/test_runtime_logging.py",
@@ -197,30 +197,30 @@
     },
     {
       "path": "tests/test_telemetry.py",
-      "sha256": "5a840b5a8eed7e1a90b1401525f1e26a7ad9905bdfb16f28b01870437f8e628d",
-      "size": 3525
+      "sha256": "3f2b5e9b1edf76c6639b99c0a7d5a319175ccfbc9c651fdea6bc496df281e309",
+      "size": 3396
     },
     {
       "path": "tools/build_stix_bundle.py",
-      "sha256": "d59e84fafee5f85e163682b7f9dea61dcc41cec1c2d2a8dc655b648ed48c6c34",
-      "size": 12928
+      "sha256": "e2d74ebdcce84ad1564fc0641f887eb17f3f69ac1dbc6200f1c9717a4c7186c3",
+      "size": 10477
     },
     {
       "path": "tools/forward_events.py",
-      "sha256": "cf74a2375afaec8aa6b00185f9b753ac9f2a2d149e0e31801ba76bc26b6f95af",
-      "size": 11845
+      "sha256": "dc1497396bed545a2c54d1c0c8e7a6a7a0ebfa99cc3ea84fe5773b73d7bbdc3b",
+      "size": 11609
     },
     {
       "path": "tools/repository_safety_check.py",
-      "sha256": "e0981df904c38394454a0d85f20647eac623435792e31a528bc7ce078bf83c41",
-      "size": 4531
+      "sha256": "cd31db841cfbb1647d3b207f9b07053aef23ade94fc7d99db67709fccc5a8dc6",
+      "size": 6800
     },
     {
       "path": "tools/validate_register_map.py",
-      "sha256": "6a2a6098cf3c44a5efcadca9d79bdba9674da69e805641caaaa21a093e696d6a",
-      "size": 8337
+      "sha256": "189bd8ba6af44bacab701436fec3622f2bf2222de99a1f0ceb74f22cb26b3e4c",
+      "size": 7869
     }
   ],
-  "release_version": "0.1.1",
+  "release_version": "0.1.2",
   "schema_version": "1.0.0"
 }

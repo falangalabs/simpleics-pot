@@ -36,11 +36,10 @@ REQUIRED_DEVICE_STRINGS = {
     "revision",
     "user_application_name",
 }
-#: MEI-14 object 0x03. Optional on real equipment and commonly absent, so an
+#: MEI-14 object 0x03 (VendorUrl) is optional in the specification, so an
 #: empty value is valid and means "do not publish the object" — pymodbus drops
-#: falsy identity objects. A non-empty value must still be a real scheme, and
-#: must never be an RFC 2606/6761 reserved name: those cannot exist on real
-#: equipment, so one read of FC43 would prove the device synthetic.
+#: falsy identity objects. A non-empty value must use http or https and must
+#: not use an RFC 2606/6761 reserved name.
 OPTIONAL_DEVICE_STRINGS = {"vendor_url"}
 RESERVED_TLDS = ("invalid", "example", "test", "localhost")
 
@@ -49,8 +48,8 @@ def _uses_reserved_name(url: str) -> bool:
     """Whether the URL's host sits under an RFC 2606/6761 reserved name.
 
     Matched on the host's trailing label, not as a substring: `acme.testlab.com`
-    and `example-automation.de` are perfectly ordinary names, and a substring
-    rule would reject them while a real vendor URL is exactly what we want here.
+    and `example-automation.de` are ordinary registered names, and a
+    substring rule would reject them.
     """
     remainder = url.split("://", 1)[-1]
     host = remainder.split("/", 1)[0].split("@")[-1].split(":", 1)[0]
@@ -74,11 +73,7 @@ PROCESS_BOUNDS = {
     "auto_hysteresis_raw": (1, 5_000),
     "actuator_delay_seconds": (0.05, 60.0),
 }
-#: Bounds are declared only for the quantities this edition's plant actually
-#: has. Carrying an entry for a key the model never reads would publish the
-#: name of a behaviour that exists somewhere else, and the bound and its
-#: comment would describe it -- which is how a validator becomes a datasheet
-#: for the thing it is not validating.
+#: Bounds are declared for the process keys this edition's model reads.
 
 
 class MapValidationError(ValueError):
@@ -116,8 +111,8 @@ def validate_map(document: dict[str, Any]) -> list[str]:
             errors.append("device.vendor_url must use http or https")
         if _uses_reserved_name(vendor_url):
             errors.append(
-                "device.vendor_url must not use an RFC-reserved name; it would "
-                "prove the device synthetic in one read of FC43"
+                "device.vendor_url must not use an RFC-reserved name "
+                "(RFC 2606/6761)"
             )
 
     process = document.get("process", {})

@@ -8,16 +8,20 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  unit:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.13"
+          python-version: ${{ matrix.python-version }}
           cache: pip
       - name: Install locked dependencies and project
         run: |
@@ -34,6 +38,18 @@ jobs:
         run: python -m compileall -q src tools examples
       - name: Build wheel without resolving new dependencies
         run: python -m pip wheel --no-build-isolation --no-deps --wheel-dir dist .
+
+  # One stable check name over the matrix above, whatever versions it holds.
+  test:
+    if: always()
+    needs: unit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Every Python version passed
+        env:
+          RESULT: ${{ needs.unit.result }}
+        run: test "$RESULT" = "success"
 
   container:
     runs-on: ubuntu-24.04

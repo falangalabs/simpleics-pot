@@ -134,12 +134,9 @@ class Forwarder:
         self.facility = facility
         self.counters = counters
         self.stream = stream
-        # A token bucket, not a minimum gap between sends. The first version
-        # enforced a gap and dropped two of the first three events a real pot
-        # produced, because Modbus traffic arrives in bursts -- a scanner sends
-        # twenty requests as fast as it can, and those are the twenty most
-        # worth keeping. The bucket lets a burst through and only bites on a
-        # sustained flood, which is what the limit is actually for.
+        # A token bucket, not a minimum gap between sends: Modbus traffic
+        # arrives in bursts, and a bucket lets a burst through while still
+        # limiting a sustained flood, which is what the limit is for.
         self._rate = float(events_per_second)
         self._capacity = max(1.0, self._rate) if self._rate > 0 else 0.0
         self._tokens = self._capacity

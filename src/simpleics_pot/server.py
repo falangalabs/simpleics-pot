@@ -147,12 +147,10 @@ class ContextAwareRequestHandler(ServerRequestHandler):
                 )
                 return len(data)
             except Exception as exc:  # pinned dependency boundary
-                # A decoder that raises must not take the connection with it.
-                # A truncated FC43 did exactly that -- struct.error escaped
-                # into data_received and the socket died mid-conversation --
-                # and a device that hangs up on a short frame is the loudest
-                # tell a honeypot can emit. Real equipment answers. So we
-                # answer, echoing the function code the frame claimed.
+                # A decoder error must not close the connection. Answer with
+                # an exception for the function code the frame claimed: the
+                # specification gives exception 03 for a request whose
+                # remaining fields cannot be read.
                 SECURITY_LOG.warning(
                     "answering an undecodable request session_id=%s error=%s",
                     self.session_id,
@@ -166,10 +164,9 @@ class ContextAwareRequestHandler(ServerRequestHandler):
                 refusal = ExceptionResponse(
                     claimed, exception_code=ExcCodes.ILLEGAL_VALUE
                 )
-                # The header survived even though the payload did not, so the
-                # transaction id is still readable -- and echoing it is what a
-                # real device does. Answering every malformed frame with id 0
-                # would hand a scanner a second tell to replace the first.
+                # The MBAP header is intact, so its transaction and unit
+                # identifiers are copied into this response, as the Modbus
+                # Messaging on TCP/IP guide requires of a response.
                 if len(frame) >= 2:
                     refusal.transaction_id = int.from_bytes(frame[0:2], "big")
                 if len(frame) > MBAP_UNIT_OFFSET:
@@ -264,11 +261,10 @@ class ContextAwareRequestHandler(ServerRequestHandler):
         self.server_send(response, addr)
 
 
-#: A single-coil write carries only two defined values; everything else is
-#: outside the protocol. pymodbus turns the field into a bool before the
-#: datastore ever sees it, so 0x1234 arrives as "on" and the device happily
-#: agrees -- which no real controller does. The check has to happen on the
-#: bytes, so it happens here.
+#: A single-coil write carries only two defined values, 0xFF00 (on) and 0x0000
+#: (off), and the specification answers any other value with exception 03.
+#: pymodbus turns the field into a bool before the datastore sees it, so the
+#: check is made on the raw bytes here.
 COIL_ON = 0xFF00
 COIL_OFF = 0x0000
 WRITE_SINGLE_COIL = 5
