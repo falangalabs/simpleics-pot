@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sys
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -18,7 +20,20 @@ from simpleics_pot.register_map import PACKAGE_REGISTER_MAP, RegisterMap  # noqa
 
 class PublicPackagingTests(unittest.TestCase):
     def test_runtime_and_release_versions_match(self) -> None:
-        self.assertEqual("0.1.1", __version__)
+        """One release, one number: the package, the runtime, the image tag
+        and the build manifest must all say the same thing."""
+        with (ROOT / "pyproject.toml").open("rb") as handle:
+            released = tomllib.load(handle)["project"]["version"]
+        self.assertRegex(released, r"^\d+\.\d+\.\d+$")
+        self.assertEqual(released, __version__)
+        compose = (ROOT / "compose.yaml").read_text(encoding="utf-8")
+        self.assertEqual(
+            [released], re.findall(r"^\s*image: simpleics-pot:(\S+)$", compose, re.M)
+        )
+        manifest = json.loads(
+            (ROOT / "PUBLIC_BUILD_MANIFEST.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(released, manifest["release_version"])
 
     def test_packaged_register_map_exists_and_loads(self) -> None:
         self.assertTrue(PACKAGE_REGISTER_MAP.is_file())
@@ -29,7 +44,6 @@ class PublicPackagingTests(unittest.TestCase):
     def test_public_build_manifest_matches_release_version(self) -> None:
         document = json.loads((ROOT / "PUBLIC_BUILD_MANIFEST.json").read_text(encoding="utf-8"))
         self.assertEqual("1.0.0", document["schema_version"])
-        self.assertEqual("0.1.1", document["release_version"])
         paths = {item["path"] for item in document["files"]}
         self.assertIn("src/simpleics_pot/runtime.py", paths)
         self.assertNotIn("PUBLIC_BUILD_MANIFEST.json", paths)
@@ -94,6 +108,46 @@ class PublicPackagingTests(unittest.TestCase):
             self.assertTrue(
                 any("checkout credentials persist" in error for error in check_repository(root))
             )
+
+    def test_repository_safety_rejects_split_action_commits(self) -> None:
+        import tempfile
+
+        def errors_for(first: str, second: str) -> list[str]:
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                workflow = root / ".github" / "workflows" / "scan.yml"
+                workflow.parent.mkdir(parents=True)
+                workflow.write_text(
+                    "permissions:\n  contents: read\nsteps:\n"
+                    f"  - uses: github/codeql-action/init@{first}\n"
+                    f"  - uses: github/codeql-action/analyze@{second}\n",
+                    encoding="utf-8",
+                )
+                return check_repository(root)
+
+        self.assertTrue(
+            any("different commits" in error for error in errors_for("a" * 40, "b" * 40))
+        )
+        self.assertEqual([], errors_for("a" * 40, "a" * 40))
+
+    def test_repository_safety_rejects_a_pin_its_lock_does_not_install(self) -> None:
+        import tempfile
+
+        def errors_for(locked: str) -> list[str]:
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                (root / "pyproject.toml").write_text(
+                    '[build-system]\nrequires = ["setuptools==84.0.0"]\n',
+                    encoding="utf-8",
+                )
+                (root / "requirements-build.lock").write_text(
+                    f"setuptools=={locked} \\\n    --hash=sha256:{'0' * 64}\n",
+                    encoding="utf-8",
+                )
+                return check_repository(root)
+
+        self.assertTrue(any("disagrees" in error for error in errors_for("83.0.0")))
+        self.assertEqual([], errors_for("84.0.0"))
 
     def test_repository_safety_rejects_new_package_manager_surface(self) -> None:
         import tempfile

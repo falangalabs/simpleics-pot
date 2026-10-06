@@ -6,6 +6,7 @@ from __future__ import annotations
 import ipaddress
 import re
 import sys
+import tomllib
 from pathlib import Path
 
 
@@ -28,6 +29,17 @@ PRIVATE_KEY_MARKERS = tuple(
 )
 ACTION_USES_PATTERN = re.compile(r"(?m)^\s*-?\s*uses:\s*([^\s#]+)")
 FULL_COMMIT_REF = re.compile(r"^[^@\s]+@[0-9a-fA-F]{40}$")
+#: Everything pinned from one repository -- actions such as codeql-action's
+#: init and analyze, or reusable workflows -- is one release; pinned to
+#: different commits it is two.
+ACTION_REPOSITORY = re.compile(r"^([^/@\s]+/[^/@\s]+)")
+EXACT_PIN = re.compile(r"^([A-Za-z0-9_.-]+)==([^\s;]+)$")
+LOCK_PIN = re.compile(r"(?m)^([A-Za-z0-9_.-]+)==([^\s\\]+)")
+#: pyproject.toml table -> the hash-locked file CI installs it from.
+PIN_SOURCES = (
+    (("build-system", "requires"), "requirements-build.lock"),
+    (("project", "dependencies"), "requirements.lock"),
+)
 FORBIDDEN_WORKFLOW_TEXT = (
     "pull_request_target:",
     "workflow_run:",
@@ -50,8 +62,38 @@ def _is_allowed_address(value: str) -> bool:
     return address.is_loopback or address.is_unspecified or address.is_private
 
 
+def _normalised(name: str) -> str:
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def _check_pins_agree(root: Path, errors: list[str]) -> None:
+    """Every exact pin in pyproject.toml must be the version its lock installs."""
+    pyproject = root / "pyproject.toml"
+    if not pyproject.is_file():
+        return
+    with pyproject.open("rb") as handle:
+        document = tomllib.load(handle)
+    for (table, key), lock_name in PIN_SOURCES:
+        lock = root / lock_name
+        locked = {}
+        if lock.is_file():
+            locked = {
+                _normalised(name): version
+                for name, version in LOCK_PIN.findall(lock.read_text(encoding="utf-8"))
+            }
+        for requirement in document.get(table, {}).get(key, []):
+            match = EXACT_PIN.fullmatch(requirement.strip())
+            if match is None:
+                errors.append(f"pyproject requirement is not an exact pin: {requirement}")
+                continue
+            name, version = match.groups()
+            if locked.get(_normalised(name)) != version:
+                errors.append(f"pyproject pin {requirement} disagrees with {lock_name}")
+
+
 def check_repository(root: Path = ROOT) -> list[str]:
     errors: list[str] = []
+    action_commits: dict[str, set[str]] = {}
     for path in sorted(root.rglob("*")):
         relative = path.relative_to(root)
         if any(part in IGNORED_PARTS for part in relative.parts):
@@ -94,6 +136,11 @@ def check_repository(root: Path = ROOT) -> list[str]:
                 if not FULL_COMMIT_REF.fullmatch(reference):
                     errors.append(f"GitHub Action is not pinned to a full commit: {relative}")
                     break
+                repository = ACTION_REPOSITORY.match(reference)
+                if repository is not None:
+                    action_commits.setdefault(repository.group(1).lower(), set()).add(
+                        reference.rsplit("@", 1)[1].lower()
+                    )
             lines = text.splitlines()
             for index, line in enumerate(lines):
                 if "uses: actions/checkout@" not in line:
@@ -102,6 +149,10 @@ def check_repository(root: Path = ROOT) -> list[str]:
                 if "persist-credentials: false" not in following:
                     errors.append(f"checkout credentials persist in workflow: {relative}")
                     break
+    for repository, commits in sorted(action_commits.items()):
+        if len(commits) > 1:
+            errors.append(f"actions from {repository} are pinned to different commits")
+    _check_pins_agree(root, errors)
     return errors
 
 

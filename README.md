@@ -51,9 +51,8 @@ See [Deployment](docs/DEPLOYMENT.md) before changing the bind address.
 
 ## Process model
 
-The included community profile is a fictional compact lift-station controller,
-deliberately distinct from any private deployment. Its 21
-points cover coils, discrete inputs, holding registers and input registers.
+The included community profile is a fictional compact lift-station controller.
+Its 21 points cover coils, discrete inputs, holding registers and input registers.
 For example, an authorized client can switch to MANUAL, issue a pump command,
 observe delayed run feedback, and then see discharge flow, motor current and
 tank level respond coherently.

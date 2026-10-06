@@ -106,11 +106,10 @@ class SyslogForwardingTests(unittest.TestCase):
         self.assertIn("11111111-2222-3333-4444-555555555555", line)
 
     def test_a_burst_is_forwarded_rather_than_thinned(self) -> None:
-        """Written after the first version dropped two of the first three.
+        """Modbus arrives in bursts, and a burst must pass whole.
 
-        It enforced a minimum gap between sends, so any burst lost most of
-        itself -- and Modbus arrives in bursts. A scanner's twenty rapid
-        requests are the twenty most worth having.
+        A minimum gap between sends would lose most of every burst; the limit
+        exists for a sustained flood, not for a short run of requests.
         """
         counters = forward.Counters()
         sender = forward.Forwarder(
@@ -205,57 +204,11 @@ class StixPackagingTests(unittest.TestCase):
         self.assertIn("3,6", indicator["description"])
         # Nothing in this edition computes a verdict, so nothing may publish one.
         text = json.dumps(bundle)
-        for verdict in ("scanner", "mapper", "operator", "malicious", "confidence"):
+        for verdict in ("malicious", "benign", "suspicious", "score", "confidence"):
             self.assertNotIn(verdict, text.lower())
 
-    def test_a_write_request_carries_its_attack_ics_technique(self) -> None:
-        """A command message aimed at process state. The label describes the
-        REQUEST -- this device answers writes with an exception and the label
-        is the same either way, because being asked is the observation."""
-        sources = stix.collect([event(source_ip=ROUTABLE, function_code=6,
-                                      operation="write")])
-        bundle = stix.build_bundle(sources, "sensor", "2026-08-12T00:00:00.000Z")
-        indicator = next(o for o in bundle["objects"] if o["type"] == "indicator")
-        self.assertIn("attack-pattern-ics:T0855", indicator["labels"])
-
-    def test_an_identification_request_carries_discovery(self) -> None:
-        """Function code 43 is not served here, so it earns an exception --
-        and is still recorded, and still discovery."""
-        sources = stix.collect([event(source_ip=ROUTABLE, function_code=43,
-                                      operation="unknown")])
-        bundle = stix.build_bundle(sources, "sensor", "2026-08-12T00:00:00.000Z")
-        indicator = next(o for o in bundle["objects"] if o["type"] == "indicator")
-        self.assertIn("attack-pattern-ics:T0846", indicator["labels"])
-
-    def test_an_ordinary_read_earns_no_technique(self) -> None:
-        """The under-claiming half, and the one worth protecting.
-
-        Reading holding registers is what a real client does all day. Labelling
-        it would put a technique on the most common and least informative thing
-        this device sees, and a vocabulary that fires on everything says
-        nothing.
-        """
-        sources = stix.collect([event(source_ip=ROUTABLE, function_code=3,
-                                      operation="read")])
-        bundle = stix.build_bundle(sources, "sensor", "2026-08-12T00:00:00.000Z")
-        indicator = next(o for o in bundle["objects"] if o["type"] == "indicator")
-        self.assertEqual(
-            [], [l for l in indicator["labels"] if l.startswith("attack-pattern-ics:")]
-        )
-
-    def test_an_unmapped_code_is_silent_rather_than_guessed(self) -> None:
-        """Diagnostics (8) is disruptive only in some subfunctions, and this
-        edition does not record which was asked for. Silence beats a guess."""
-        self.assertEqual([], stix.attack_ics_techniques([8]))
-
-    def test_a_technique_is_reported_once_however_often_it_is_seen(self) -> None:
-        """Four write codes are one technique, not four labels."""
-        self.assertEqual(["T0855"], stix.attack_ics_techniques([5, 6, 15, 16]))
-
-    def test_techniques_add_no_verdict_words(self) -> None:
-        """The edition's rule, re-checked with the new labels in the bundle:
-        ids only, never technique names. A name is prose, and prose in a bundle
-        starts reading as a conclusion."""
+    def test_labels_are_only_the_documented_facts(self) -> None:
+        """The labels say what arrived, never what it meant."""
         sources = stix.collect(
             [
                 event(source_ip=ROUTABLE, function_code=6, operation="write"),
@@ -263,10 +216,15 @@ class StixPackagingTests(unittest.TestCase):
             ]
         )
         bundle = stix.build_bundle(sources, "sensor", "2026-08-12T00:00:00.000Z")
-        text = json.dumps(bundle).lower()
-        for word in ("scanner", "mapper", "operator", "malicious", "confidence",
-                     "unauthorized", "discovery", "attack pattern"):
-            self.assertNotIn(word, text)
+        indicator = next(o for o in bundle["objects"] if o["type"] == "indicator")
+        self.assertEqual(["modbus-interaction", "attempted-write"], indicator["labels"])
+
+    def test_a_source_that_only_read_carries_one_label(self) -> None:
+        sources = stix.collect([event(source_ip=ROUTABLE, function_code=3,
+                                      operation="read")])
+        bundle = stix.build_bundle(sources, "sensor", "2026-08-12T00:00:00.000Z")
+        indicator = next(o for o in bundle["objects"] if o["type"] == "indicator")
+        self.assertEqual(["modbus-interaction"], indicator["labels"])
 
     def test_identifiers_are_stable_across_runs(self) -> None:
         """A consumer that dedupes on id must not see a re-run as new."""

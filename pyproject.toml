@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools==83.0.0"]
+requires = ["setuptools==84.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "simpleics-pot"
-version = "0.1.1"
+version = "0.1.2"
 description = "Small stateful Modbus TCP honeypot for defensive ICS research"
 readme = "README.md"
 requires-python = ">=3.11"

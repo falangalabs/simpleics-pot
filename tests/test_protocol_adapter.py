@@ -28,11 +28,8 @@ UNIT_ID = _MAP.unit_id
 def area_base(area: str) -> int:
     """First address of an area, read from the map rather than assumed.
 
-    The layout is part of the persona and differs between deployments -- the
-    published community profile deliberately does not sit where any private
-    one does. A test that hardcodes 0 passes only for whoever happens to start
-    there and fails for everyone who re-personas the device, which is the one
-    thing this edition is meant to make easy.
+    A profile may place each area anywhere, so a test that hardcodes 0 would
+    fail for every profile that does not start there.
     """
     return min(item.address for item in _MAP.definitions if item.area == area)
 
@@ -349,14 +346,11 @@ class ProtocolBlackBoxTests(unittest.IsolatedAsyncioTestCase):
 
 
 class MalformedAndUndefinedRequestsAreAnsweredTests(ProtocolBlackBoxTests):
-    """Two ways a device can give itself away by being unlike real equipment.
+    """Malformed and out-of-range requests get spec-defined exception replies.
 
-    Both were live in this edition. A truncated FC43 raised inside the decoder
-    and the exception escaped into the transport, so the socket simply died --
-    and a controller that hangs up on a short frame is the loudest tell there
-    is. A single-coil write of 0x1234 was accepted as "on", because the value
-    becomes a bool before anything can object, while the protocol defines two
-    values and no others.
+    A truncated request is answered with an exception for the function code it
+    claimed, and the connection stays open. A single-coil write accepts only
+    0xFF00 and 0x0000; any other value is answered with exception 03.
     """
 
     async def _raw(self, pdu: bytes, transaction_id: int = 0x2A) -> bytes:
@@ -386,7 +380,7 @@ class MalformedAndUndefinedRequestsAreAnsweredTests(ProtocolBlackBoxTests):
                 self.assertEqual(
                     0x2A,
                     int.from_bytes(reply[0:2], "big"),
-                    "transaction id not echoed; answering 0 is its own tell",
+                    "transaction id not echoed in the MBAP header",
                 )
 
     async def test_the_device_survives_a_malformed_frame(self) -> None:

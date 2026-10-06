@@ -8,6 +8,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+# The base stays pinned by digest; this applies the security updates its
+# Alpine branch has published since that digest was cut. The price is that two
+# builds of the same commit are no longer byte-identical.
+RUN apk upgrade --no-cache
+
 RUN addgroup -S -g 10001 simpleics \
     && adduser -S -D -H -u 10001 -G simpleics -s /sbin/nologin simpleics
 

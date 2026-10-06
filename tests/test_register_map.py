@@ -73,7 +73,7 @@ class RegisterMapTests(unittest.TestCase):
         )
 
     def test_vendor_url_may_be_omitted_but_never_reserved(self) -> None:
-        """Empty means "do not publish object 0x03", as real controllers do."""
+        """Empty means "do not publish object 0x03", which the spec allows."""
         document = copy.deepcopy(self.document)
         document["device"]["vendor_url"] = ""
         self.assertEqual([], validate_map(document))

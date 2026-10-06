@@ -21,11 +21,8 @@ UNIT_ID = int(_MAP["device"]["unit_id"])
 def address_of(key: str) -> int:
     """Where this device keeps a value, asked rather than assumed.
 
-    The map is the persona and the persona is meant to be changed -- that is
-    most of the point of running your own. A demonstration that hardcodes 0
-    works only for whoever left the block where it started, and this one did
-    not: after the published layout moved, the first command in the README
-    answered with an exception.
+    The map is the persona and the persona is meant to be changed, so the
+    demonstration reads each address from the map instead of assuming one.
     """
     for register in _MAP["registers"]:
         if register["key"] == key:
